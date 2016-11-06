@@ -236,6 +236,20 @@ AC_REPLACE_FUNCS(snprintf)
 AC_REPLACE_FUNCS(strlcpy)
 AC_REPLACE_FUNCS(memmove)
 
+# systemd settings
+if pkg-config --exists systemd; then
+	systemdsystemunitdir="`pkg-config --variable=systemdsystemunitdir systemd`"
+else
+	systemdsystemunitdir="$libdir/systemd/system"
+fi
+AC_ARG_WITH([unitdir], AC_HELP_STRING([--with-unitdir=dir],
+	[Set the systemd system unit dir, defaults to systemd default if systemd is installed or LIBDIR/systemd/system]),
+	, withval="")
+if test -n "$withval"; then
+	systemdsystemunitdir="$withval"
+fi
+AC_SUBST([systemdsystemunitdir])
+
 hooks="auto"
 AC_ARG_WITH([hooks], AC_HELP_STRING([--with-hooks],
 [Set the DHCP change hooks to use, default 'auto', can be 'osx', 'networkmanager', 'netconfig', 'windows' or 'none']),, withval="")
