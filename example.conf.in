@@ -1,6 +1,3 @@
-# config for dnssec-trigger @VERSION@.
-# this is a comment. there must be one statement per line.
-
 # logging detail, 0=only errors, 1=operations, 2=detail, 3,4 debug detail.
 # verbosity: 1
 
