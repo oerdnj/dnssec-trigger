@@ -162,10 +162,12 @@ static int setup_ssl_ctx(struct svr* s)
 		return 0;
 	}
 	/* no SSLv2 because has defects */
+#if OPENSSL_VERSION_NUMBER < 0x10100000
 	if(!(SSL_CTX_set_options(s->ctx, SSL_OP_NO_SSLv2) & SSL_OP_NO_SSLv2)){
 		log_crypto_err("could not set SSL_OP_NO_SSLv2");
 		return 0;
 	}
+#endif
 	s_cert = s->cfg->server_cert_file;
 	s_key = s->cfg->server_key_file;
 	verbose(VERB_ALGO, "setup SSL certificates");

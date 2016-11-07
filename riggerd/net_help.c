@@ -447,11 +447,13 @@ void* listen_sslctx_create(char* key, char* pem, char* verifypem)
 		return NULL;
 	}
 	/* no SSLv2 because has defects */
+#if OPENSSL_VERSION_NUMBER < 0x10100000
 	if(!(SSL_CTX_set_options(ctx, SSL_OP_NO_SSLv2) & SSL_OP_NO_SSLv2)){
 		log_crypto_err("could not set SSL_OP_NO_SSLv2");
 		SSL_CTX_free(ctx);
 		return NULL;
 	}
+#endif
 	if(!SSL_CTX_use_certificate_file(ctx, pem, SSL_FILETYPE_PEM)) {
 		log_err("error for cert file: %s", pem);
 		log_crypto_err("error in SSL_CTX use_certificate_file");
