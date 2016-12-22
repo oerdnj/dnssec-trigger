@@ -667,53 +667,64 @@ AC_DEFUN([ACX_SSL_CHECKS], [
                 LIBSSL_LDFLAGS="$LIBSSL_LDFLAGS -L$ssldir/lib"
                 ACX_RUNTIME_PATH_ADD([$ssldir/lib])
             fi
-        
-            AC_MSG_CHECKING([for HMAC_CTX_init in -lcrypto])
-            LIBS="$LIBS -lcrypto"
-            LIBSSL_LIBS="$LIBSSL_LIBS -lcrypto"
-            AC_TRY_LINK(, [
-                int HMAC_CTX_init(void);
-                (void)HMAC_CTX_init();
-              ], [
-                AC_MSG_RESULT(yes)
-                AC_DEFINE([HAVE_HMAC_CTX_INIT], 1, 
-                          [If you have HMAC_CTX_init])
-              ], [
-                AC_MSG_RESULT(no)
-                # check if -lwsock32 or -lgdi32 are needed.	
-                BAKLIBS="$LIBS"
-                BAKSSLLIBS="$LIBSSL_LIBS"
-                LIBS="$LIBS -lgdi32"
-                LIBSSL_LIBS="$LIBSSL_LIBS -lgdi32"
-                AC_MSG_CHECKING([if -lcrypto needs -lgdi32])
-                AC_TRY_LINK([], [
-                    int HMAC_CTX_init(void);
-                    (void)HMAC_CTX_init();
-                  ],[
-                    AC_DEFINE([HAVE_HMAC_CTX_INIT], 1, 
-                        [If you have HMAC_CTX_init])
-                    AC_MSG_RESULT(yes) 
-                  ],[
+
+	    found_hmac=no
+            for hmac_func in HMAC_CTX_new HMAC_CTX_init; do
+                AC_MSG_CHECKING([for $hmac_func in -lcrypto])
+                LIBS="$LIBS -lcrypto"
+                LIBSSL_LIBS="$LIBSSL_LIBS -lcrypto"
+                AC_TRY_LINK(, [
+                    int $hmac_func(void);
+                    (void)$hmac_func();
+                  ], [
+                    AC_MSG_RESULT(yes)
+                    AC_DEFINE([HAVE_HMAC_CTX], 1, 
+                              [If you have HMAC_CTX functions])
+                    found_hmac=yes
+                    break
+                  ], [
                     AC_MSG_RESULT(no)
-                    LIBS="$BAKLIBS"
-                    LIBSSL_LIBS="$BAKSSLLIBS"
-                    LIBS="$LIBS -ldl"
-                    LIBSSL_LIBS="$LIBSSL_LIBS -ldl"
-                    AC_MSG_CHECKING([if -lcrypto needs -ldl])
+                    # check if -lwsock32 or -lgdi32 are needed.	
+                    BAKLIBS="$LIBS"
+                    BAKSSLLIBS="$LIBSSL_LIBS"
+                    LIBS="$LIBS -lgdi32"
+                    LIBSSL_LIBS="$LIBSSL_LIBS -lgdi32"
+                    AC_MSG_CHECKING([if -lcrypto needs -lgdi32])
                     AC_TRY_LINK([], [
-                        int HMAC_CTX_init(void);
-                        (void)HMAC_CTX_init();
+                        int $hmac_func(void);
+                        (void)$hmac_func();
                       ],[
-                        AC_DEFINE([HAVE_HMAC_CTX_INIT], 1, 
-                            [If you have HMAC_CTX_init])
+                        AC_DEFINE([HAVE_HMAC_CTX], 1, 
+                            [If you have HMAC_CTX functions])
                         AC_MSG_RESULT(yes) 
+                        found_hmac=yes
+                        break
                       ],[
                         AC_MSG_RESULT(no)
-                    AC_MSG_ERROR([OpenSSL found in $ssldir, but version 0.9.7 or higher is required])
+                        LIBS="$BAKLIBS"
+                        LIBSSL_LIBS="$BAKSSLLIBS"
+                        LIBS="$LIBS -ldl"
+                        LIBSSL_LIBS="$LIBSSL_LIBS -ldl"
+                        AC_MSG_CHECKING([if -lcrypto needs -ldl])
+                        AC_TRY_LINK([], [
+                            int $hmac_func(void);
+                            (void)$hmac_func();
+                          ],[
+                            AC_DEFINE([HAVE_HMAC_CTX], 1, 
+                                [If you have HMAC_CTX functions])
+                            AC_MSG_RESULT(yes)
+                            found_hmac=yes
+                            break
+                          ],[
+                            AC_MSG_RESULT(no)
+                        ])
                     ])
                 ])
-            ])
-        fi
+            done
+	    if test x_$found_hmac != x_yes; then
+                AC_MSG_ERROR([OpenSSL found in $ssldir, but version 0.9.7 or higher is required])
+            fi
+	fi
         AC_SUBST(HAVE_SSL)
         AC_SUBST(RUNTIME_PATH)
     fi
