@@ -23,7 +23,7 @@ fi
 # set PATH correctly instead of absolute paths to binaries
 PATH="@sbindir@:@bindir@:/sbin:/usr/sbin:/bin:/usr/bin"
 
-state_dir="/var/run/dnssec-trigger"
+state_dir="@rundir@/dnssec-trigger"
 validate_forward_zones="no"
 
 # implementation

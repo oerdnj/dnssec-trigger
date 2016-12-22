@@ -236,6 +236,16 @@ AC_REPLACE_FUNCS(snprintf)
 AC_REPLACE_FUNCS(strlcpy)
 AC_REPLACE_FUNCS(memmove)
 
+# rundir
+rundir="${localstatedir}/run"
+AC_ARG_WITH([rundir], AC_HELP_STRING([--with-rundir=path],
+	[Path to run-time variable data (pid, sockets...), defaults to LOCALSTATEDIR/run]),
+	, withval="")
+if test -n "$withval"; then
+	rundir="$withval"
+fi
+AC_SUBST(rundir)
+
 # systemd settings
 if pkg-config --exists systemd; then
 	systemdsystemunitdir="`pkg-config --variable=systemdsystemunitdir systemd`"
@@ -515,8 +525,8 @@ AC_DEFINE_UNQUOTED([CONFIGFILE], ["$configfile_esc"], [default config file name 
 AC_SUBST(configfile)
 
 AC_ARG_WITH([pidfile], AC_HELP_STRING([--with-pidfile=path],
-[set the pidfile to use, default /var/run/dnssec-trigger.pid]),, withval="")
-pidfile="/var/run/dnssec-trigger.pid"
+[set the pidfile to use, default RUNDIR/dnssec-trigger.pid]),, withval="")
+pidfile="$rundir/dnssec-trigger.pid"
 if test -n "$withval"; then
 	pidfile="$withval"
 fi

@@ -61,9 +61,11 @@ do_subst = sed -e 's,[@]SHELL[@],$(SHELL),g' \
 	       -e 's,[@]PACKAGE[@],$(PACKAGE),g' \
 	       -e 's,[@]VERSION[@],$(VERSION),g' \
 	       -e 's,[@]PYTHON[@],$(PYTHON),g' \
+	       -e 's,[@]sysconfdir[@],$(sysconfdir),g' \
 	       -e 's,[@]libexecdir[@],$(libexecdir),g' \
 	       -e 's,[@]sbindir[@],$(sbindir),g' \
 	       -e 's,[@]keydir[@],$(keydir),g' \
+	       -e 's,[@]rundir[@],$(rundir),g' \
 	       -e 's,[@]pidfile[@],$(pidfile),g' \
 	       -e 's,[@]unbound_control_path[@],$(unbound_control_path),g' \
 	       -e 's,[@]login_command[@],$(login_command),g' \
@@ -179,7 +181,7 @@ $(BUILD)%.o:    $(srcdir)/%.c
 	@-if test ! -d $(dir $@); then $(INSTALL) -d $(patsubst %/,%,$(dir $@)); fi
 	$Q$(COMPILE) -o $@ -c $<
 
-all:	$(COMMON_OBJ) dnssec-triggerd$(EXEEXT) dnssec-trigger-control$(EXEEXT) dnssec-trigger-control-setup $(makehook) $(makegui) example.conf dnssec-trigger.8 dnssec-triggerd.service
+all:	$(COMMON_OBJ) dnssec-triggerd$(EXEEXT) dnssec-trigger-control$(EXEEXT) dnssec-trigger-control-setup $(makehook) $(makegui) example.conf dnssec-trigger.8 dnssec-triggerd.service dnssec-triggerd-keygen.service
 
 test:	
 	@echo done
@@ -205,6 +207,10 @@ dnssec-trigger-control-setup:	$(srcdir)/dnssec-trigger-control-setup.sh.in Makef
 dnssec-triggerd.service:	$(srcdir)/dnssec-triggerd.service.in Makefile
 	rm -f $@
 	$(do_subst) < $(srcdir)/dnssec-triggerd.service.in > $@
+
+dnssec-triggerd-keygen.service:	$(srcdir)/dnssec-triggerd-keygen.service.in Makefile
+	rm -f $@
+	$(do_subst) < $(srcdir)/dnssec-triggerd-keygen.service.in > $@
 
 dnssec-trigger-panel.desktop:	$(srcdir)/panel/dnssec-trigger-panel.desktop.in Makefile
 	rm -f $@
@@ -339,7 +345,7 @@ clean:
 	rm -f *.o *.d *.lo *~ tags
 	rm -f dnssec-trigger-panel$(EXEEXT) dnssec-triggerd$(EXEEXT)
 	rm -f dnssec-trigger-control-setup dnssec-trigger-control$(EXEEXT)
-	rm -f 01-dnssec-trigger dnssec-trigger-script dnssec-trigger-osx.sh nl.nlnetlabs.dnssec-trigger-hook.plist dnssec-trigger-netconfig-hook example.conf nl.nlnetlabs.dnssec-triggerd.plist nl.nlnetlabs.dnssec-trigger-panel.plist dnssec-trigger-setdns.sh osx/osx-riggerapp dnssec-triggerd.service osx/RiggerStatusItem/RiggerStatusItem.xcodeproj/project.pbxproj
+	rm -f 01-dnssec-trigger dnssec-trigger-script dnssec-trigger-osx.sh nl.nlnetlabs.dnssec-trigger-hook.plist dnssec-trigger-netconfig-hook example.conf nl.nlnetlabs.dnssec-triggerd.plist nl.nlnetlabs.dnssec-trigger-panel.plist dnssec-trigger-setdns.sh osx/osx-riggerapp dnssec-triggerd.service dnssec-triggerd-keygen.service osx/RiggerStatusItem/RiggerStatusItem.xcodeproj/project.pbxproj
 	rm -f dnssec-trigger-panel.desktop dnssec-trigger.8 dnssec-trigger-keygen$(EXEEXT)
 	rm -rf autom4te.cache build osx/RiggerStatusItem/build
 
@@ -379,11 +385,11 @@ windows-hook-uninstall:
 
 networkmanager-hook-install:
 	$(INSTALL) -m 755 -d $(DESTDIR)$(networkmanager_dispatcher_dir)
-	$(INSTALL) -m 755 -d $(DESTDIR)/etc
+	$(INSTALL) -m 755 -d $(DESTDIR)$(sysconfdir)
 	$(INSTALL) -m 755 -d $(DESTDIR)$(systemdsystemunitdir)
 	$(INSTALL) -c -m 755 01-dnssec-trigger $(DESTDIR)$(networkmanager_dispatcher_dir)/01-dnssec-trigger
 	$(INSTALL) -c -m 755 dnssec-trigger-script $(DESTDIR)$(libexecdir)/dnssec-trigger-script
-	$(INSTALL) -c -m 644 dnssec.conf $(DESTDIR)/etc/dnssec.conf
+	$(INSTALL) -c -m 644 dnssec.conf $(DESTDIR)$(sysconfdir)/dnssec.conf
 	$(INSTALL) -c -m 644 dnssec-triggerd.service $(DESTDIR)$(systemdsystemunitdir)/dnssec-triggerd.service
 	$(INSTALL) -c -m 644 dnssec-triggerd-keygen.service $(DESTDIR)$(systemdsystemunitdir)/dnssec-triggerd-keygen.service
 
@@ -392,7 +398,7 @@ networkmanager-hook-uninstall:
 	$(DESTDIR)$(sbindir)/dnssec-triggerd$(EXEEXT) -u
 	rm -f $(DESTDIR)$(networkmanager_dispatcher_dir)/01-dnssec-trigger
 	rm -f $(DESTDIR)$(libexecdir)/dnssec-trigger-script
-	rm -f $(DESTDIR)/etc/dnssec.conf
+	rm -f $(DESTDIR)$(sysconfdir)/dnssec.conf
 	rm -f $(DESTDIR)$(systemdsystemunitdir)/dnssec-triggerd.service
 	rm -f $(DESTDIR)$(systemdsystemunitdir)/dnssec-triggerd-keygen.service
 
@@ -462,13 +468,13 @@ gtk-gui-install:
 	$(INSTALL) -c -m 644 $(srcdir)/panel/status-icon-alert.png $(DESTDIR)$(uidir)/status-icon-alert.png
 	$(INSTALL) -c -m 755 dnssec-trigger-panel$(EXEEXT) $(DESTDIR)$(bindir)/dnssec-trigger-panel$(EXEEXT)
 ifeq "$(APP_INDICATOR)" "yes"
-	$(INSTALL) -m 755 -d $(DESTDIR)/usr/share/icons/hicolor/scalable/apps
-	$(INSTALL) -m 755 -d $(DESTDIR)/usr/share/icons/hicolor/64x64/apps
-	$(INSTALL) -c -m 644 $(srcdir)/panel/status-icon.svg $(DESTDIR)/usr/share/icons/hicolor/scalable/apps/dnssec-trigger.svg
-	$(INSTALL) -c -m 644 $(srcdir)/panel/status-icon-alert.svg $(DESTDIR)/usr/share/icons/hicolor/scalable/apps/dnssec-trigger-alert.svg
-	$(INSTALL) -c -m 644 $(srcdir)/panel/status-icon.png $(DESTDIR)/usr/share/icons/hicolor/64x64/apps/dnssec-trigger.png
-	$(INSTALL) -c -m 644 $(srcdir)/panel/status-icon-alert.png $(DESTDIR)/usr/share/icons/hicolor/64x64/apps/dnssec-trigger-alert.png
-	gtk-update-icon-cache $(DESTDIR)/usr/share/icons/hicolor
+	$(INSTALL) -m 755 -d $(DESTDIR)$(datarootdir)/icons/hicolor/scalable/apps
+	$(INSTALL) -m 755 -d $(DESTDIR)$(datarootdir)/icons/hicolor/64x64/apps
+	$(INSTALL) -c -m 644 $(srcdir)/panel/status-icon.svg $(DESTDIR)$(datarootdir)/icons/hicolor/scalable/apps/dnssec-trigger.svg
+	$(INSTALL) -c -m 644 $(srcdir)/panel/status-icon-alert.svg $(DESTDIR)$(datarootdir)/icons/hicolor/scalable/apps/dnssec-trigger-alert.svg
+	$(INSTALL) -c -m 644 $(srcdir)/panel/status-icon.png $(DESTDIR)$(datarootdir)/icons/hicolor/64x64/apps/dnssec-trigger.png
+	$(INSTALL) -c -m 644 $(srcdir)/panel/status-icon-alert.png $(DESTDIR)$(datarootdir)/icons/hicolor/64x64/apps/dnssec-trigger-alert.png
+	gtk-update-icon-cache $(DESTDIR)$(datarootdir)/icons/hicolor
 endif
 	if test -n "$(xdg_autostart_dir)"; then \
 		$(INSTALL) -m 755 -d $(DESTDIR)$(xdg_autostart_dir) ; \
@@ -480,11 +486,11 @@ gtk-gui-uninstall:
 	rm -f $(DESTDIR)$(uidir)/status-icon.png
 	rm -f $(DESTDIR)$(uidir)/status-icon-alert.png
 ifeq "$(APP_INDICATOR)" "yes"
-	rm -f $(DESTDIR)/usr/share/icons/hicolor/scalable/apps/dnssec-trigger.svg
-	rm -f $(DESTDIR)/usr/share/icons/hicolor/scalable/apps/dnssec-trigger-alert.svg
-	rm -f $(DESTDIR)/usr/share/icons/hicolor/64x64/apps/dnssec-trigger.png
-	rm -f $(DESTDIR)/usr/share/icons/hicolor/64x64/apps/dnssec-trigger-alert.png
-	gtk-update-icon-cache $(DESTDIR)/usr/share/icons/hicolor
+	rm -f $(DESTDIR)$(datarootdir)/icons/hicolor/scalable/apps/dnssec-trigger.svg
+	rm -f $(DESTDIR)$(datarootdir)/icons/hicolor/scalable/apps/dnssec-trigger-alert.svg
+	rm -f $(DESTDIR)$(datarootdir)/icons/hicolor/64x64/apps/dnssec-trigger.png
+	rm -f $(DESTDIR)$(datarootdir)/icons/hicolor/64x64/apps/dnssec-trigger-alert.png
+	gtk-update-icon-cache $(DESTDIR)$(datarootdir)/icons/hicolor
 endif
 	if test -n "$(xdg_autostart_dir)"; then \
 		rm -f $(DESTDIR)$(xdg_autostart_dir)/dnssec-trigger-panel.desktop ; fi
