@@ -70,7 +70,7 @@ global_nameservers="`echo $global_nameservers`"
 ############################################################
 # configure global nameservers using dnssec-trigger-control
 if [ -n "`pidof dnssec-triggerd`" ] ; then
-    dnssec-trigger-control submit "$global_nameservers" &> /dev/null
+    dnssec-trigger-control submit "$global_nameservers" > /dev/null 2>&1
     logger "dnssec-trigger-hook(networkmanager) $ifname $action added global DNS $global_nameservers"
 else
     logger "dnssec-trigger-hook(networkmanager) $ifname $action NOT added global DNS - dnssec-triggerd is not running"
@@ -83,18 +83,18 @@ if [ -n "`pidof unbound`" ]; then
         for domain in `cat $conn_zones_file`; do
             # Remove forward zone from unbound
             if [ "$validate_forward_zones" = "no" ]; then
-            	unbound-control forward_remove +i $domain &> /dev/null
+            	unbound-control forward_remove +i $domain > /dev/null 2>&1
 	    else
-            	unbound-control forward_remove $domain &> /dev/null
+            	unbound-control forward_remove $domain > /dev/null 2>&1
 	    fi
-            unbound-control flush_zone $domain &> /dev/null
-            unbound-control flush_requestlist &> /dev/null
+            unbound-control flush_zone $domain > /dev/null 2>&1
+            unbound-control flush_requestlist > /dev/null 2>&1
 
             logger "dnssec-trigger-hook(networkmanager) $ifname $action removed forward DNS zone $domain"
         done
 
         # Remove file with zones for this connection
-        rm -f $conn_zones_file &> /dev/null
+        rm -f $conn_zones_file > /dev/null 2>&1
     fi
 
     if [ "$action" = "vpn-up" -o "$action" = "up" ]; then
@@ -102,12 +102,12 @@ if [ -n "`pidof unbound`" ]; then
             for domain in $domains; do
                 # Add forward zone into unbound
                 if [ "$validate_forward_zones" = "no" ]; then
-                    unbound-control forward_add +i $domain $nameservers &> /dev/null
+                    unbound-control forward_add +i $domain $nameservers > /dev/null 2>&1
                 else
-                    unbound-control forward_add $domain $nameservers &> /dev/null
+                    unbound-control forward_add $domain $nameservers > /dev/null 2>&1
                 fi
-                unbound-control flush_zone $domain &> /dev/null
-                unbound-control flush_requestlist &> /dev/null
+                unbound-control flush_zone $domain > /dev/null 2>&1
+                unbound-control flush_requestlist > /dev/null 2>&1
 
                 # Create zone info file
                 mkdir -p $(dirname $conn_zones_file)
