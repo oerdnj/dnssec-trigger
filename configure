@@ -642,6 +642,8 @@ gui
 hooks
 netconfig_dispatcher_dir
 networkmanager_dispatcher_dir
+systemdsystemunitdir
+rundir
 WINDRES
 UB_ON_WINDOWS
 ssldir
@@ -707,6 +709,8 @@ enable_debug
 enable_static_exe
 enable_largefile
 with_ssl
+with_rundir
+with_unitdir
 with_hooks
 with_networkmanager_dispatch
 with_netconfig_dispatch
@@ -1359,6 +1363,11 @@ Optional Packages:
   --with-ssl=pathname     enable SSL (will check /usr/local/ssl /usr/lib/ssl
                           /usr/ssl /usr/pkg /usr/local /opt/local /usr/sfw
                           /usr)
+  --with-rundir=path      Path to run-time variable data (pid, sockets...),
+                          defaults to LOCALSTATEDIR/run
+  --with-unitdir=dir      Set the systemd system unit dir, defaults to systemd
+                          default if systemd is installed or
+                          LIBDIR/systemd/system
   --with-hooks            Set the DHCP change hooks to use, default 'auto',
                           can be 'osx', 'networkmanager', 'netconfig',
                           'windows' or 'none'
@@ -1385,7 +1394,7 @@ Optional Packages:
   --with-configfile=path  set the configfile to use, default
                           keydir/dnssec-trigger.conf
   --with-pidfile=path     set the pidfile to use, default
-                          /var/run/dnssec-trigger.pid
+                          RUNDIR/dnssec-trigger.pid
   --with-python=path      set the path to Python interpreter to use for Python
                           scripts, defaults /usr/bin/python
   --with-unbound-control=path
@@ -5780,7 +5789,7 @@ else
     We can't simply define LARGE_OFF_T to be 9223372036854775807,
     since some C++ compilers masquerading as C compilers
     incorrectly reject 9223372036854775807.  */
-#define LARGE_OFF_T (((off_t) 1 << 62) - 1 + ((off_t) 1 << 62))
+#define LARGE_OFF_T ((((off_t) 1 << 31) << 31) - 1 + (((off_t) 1 << 31) << 31))
   int off_t_is_large[(LARGE_OFF_T % 2147483629 == 721
 		       && LARGE_OFF_T % 2147483647 == 1)
 		      ? 1 : -1];
@@ -5826,7 +5835,7 @@ else
     We can't simply define LARGE_OFF_T to be 9223372036854775807,
     since some C++ compilers masquerading as C compilers
     incorrectly reject 9223372036854775807.  */
-#define LARGE_OFF_T (((off_t) 1 << 62) - 1 + ((off_t) 1 << 62))
+#define LARGE_OFF_T ((((off_t) 1 << 31) << 31) - 1 + (((off_t) 1 << 31) << 31))
   int off_t_is_large[(LARGE_OFF_T % 2147483629 == 721
 		       && LARGE_OFF_T % 2147483647 == 1)
 		      ? 1 : -1];
@@ -5850,7 +5859,7 @@ rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
     We can't simply define LARGE_OFF_T to be 9223372036854775807,
     since some C++ compilers masquerading as C compilers
     incorrectly reject 9223372036854775807.  */
-#define LARGE_OFF_T (((off_t) 1 << 62) - 1 + ((off_t) 1 << 62))
+#define LARGE_OFF_T ((((off_t) 1 << 31) << 31) - 1 + (((off_t) 1 << 31) << 31))
   int off_t_is_large[(LARGE_OFF_T % 2147483629 == 721
 		       && LARGE_OFF_T % 2147483647 == 1)
 		      ? 1 : -1];
@@ -5895,7 +5904,7 @@ else
     We can't simply define LARGE_OFF_T to be 9223372036854775807,
     since some C++ compilers masquerading as C compilers
     incorrectly reject 9223372036854775807.  */
-#define LARGE_OFF_T (((off_t) 1 << 62) - 1 + ((off_t) 1 << 62))
+#define LARGE_OFF_T ((((off_t) 1 << 31) << 31) - 1 + (((off_t) 1 << 31) << 31))
   int off_t_is_large[(LARGE_OFF_T % 2147483629 == 721
 		       && LARGE_OFF_T % 2147483647 == 1)
 		      ? 1 : -1];
@@ -5919,7 +5928,7 @@ rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
     We can't simply define LARGE_OFF_T to be 9223372036854775807,
     since some C++ compilers masquerading as C compilers
     incorrectly reject 9223372036854775807.  */
-#define LARGE_OFF_T (((off_t) 1 << 62) - 1 + ((off_t) 1 << 62))
+#define LARGE_OFF_T ((((off_t) 1 << 31) << 31) - 1 + (((off_t) 1 << 31) << 31))
   int off_t_is_large[(LARGE_OFF_T % 2147483629 == 721
 		       && LARGE_OFF_T % 2147483647 == 1)
 		      ? 1 : -1];
@@ -6077,43 +6086,12 @@ $as_echo "found in $ssldir" >&6; }
 
             fi
 
-            { $as_echo "$as_me:${as_lineno-$LINENO}: checking for HMAC_CTX_init in -lcrypto" >&5
-$as_echo_n "checking for HMAC_CTX_init in -lcrypto... " >&6; }
-            LIBS="$LIBS -lcrypto"
-            LIBSSL_LIBS="$LIBSSL_LIBS -lcrypto"
-            cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-
-int
-main ()
-{
-
-                int HMAC_CTX_init(void);
-                (void)HMAC_CTX_init();
-
-  ;
-  return 0;
-}
-_ACEOF
-if ac_fn_c_try_link "$LINENO"; then :
-
-                { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
-$as_echo "yes" >&6; }
-
-$as_echo "#define HAVE_HMAC_CTX_INIT 1" >>confdefs.h
-
-
-else
-
-                { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
-$as_echo "no" >&6; }
-                # check if -lwsock32 or -lgdi32 are needed.
-                BAKLIBS="$LIBS"
-                BAKSSLLIBS="$LIBSSL_LIBS"
-                LIBS="$LIBS -lgdi32"
-                LIBSSL_LIBS="$LIBSSL_LIBS -lgdi32"
-                { $as_echo "$as_me:${as_lineno-$LINENO}: checking if -lcrypto needs -lgdi32" >&5
-$as_echo_n "checking if -lcrypto needs -lgdi32... " >&6; }
+	    found_hmac=no
+            for hmac_func in HMAC_CTX_new HMAC_CTX_init; do
+                { $as_echo "$as_me:${as_lineno-$LINENO}: checking for $hmac_func in -lcrypto" >&5
+$as_echo_n "checking for $hmac_func in -lcrypto... " >&6; }
+                LIBS="$LIBS -lcrypto"
+                LIBSSL_LIBS="$LIBSSL_LIBS -lcrypto"
                 cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
 
@@ -6121,8 +6099,8 @@ int
 main ()
 {
 
-                    int HMAC_CTX_init(void);
-                    (void)HMAC_CTX_init();
+                    int $hmac_func(void);
+                    (void)$hmac_func();
 
   ;
   return 0;
@@ -6130,22 +6108,25 @@ main ()
 _ACEOF
 if ac_fn_c_try_link "$LINENO"; then :
 
-
-$as_echo "#define HAVE_HMAC_CTX_INIT 1" >>confdefs.h
-
                     { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
 $as_echo "yes" >&6; }
+
+$as_echo "#define HAVE_HMAC_CTX 1" >>confdefs.h
+
+                    found_hmac=yes
+                    break
 
 else
 
                     { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
 $as_echo "no" >&6; }
-                    LIBS="$BAKLIBS"
-                    LIBSSL_LIBS="$BAKSSLLIBS"
-                    LIBS="$LIBS -ldl"
-                    LIBSSL_LIBS="$LIBSSL_LIBS -ldl"
-                    { $as_echo "$as_me:${as_lineno-$LINENO}: checking if -lcrypto needs -ldl" >&5
-$as_echo_n "checking if -lcrypto needs -ldl... " >&6; }
+                    # check if -lwsock32 or -lgdi32 are needed.
+                    BAKLIBS="$LIBS"
+                    BAKSSLLIBS="$LIBSSL_LIBS"
+                    LIBS="$LIBS -lgdi32"
+                    LIBSSL_LIBS="$LIBSSL_LIBS -lgdi32"
+                    { $as_echo "$as_me:${as_lineno-$LINENO}: checking if -lcrypto needs -lgdi32" >&5
+$as_echo_n "checking if -lcrypto needs -lgdi32... " >&6; }
                     cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
 
@@ -6153,8 +6134,8 @@ int
 main ()
 {
 
-                        int HMAC_CTX_init(void);
-                        (void)HMAC_CTX_init();
+                        int $hmac_func(void);
+                        (void)$hmac_func();
 
   ;
   return 0;
@@ -6163,16 +6144,51 @@ _ACEOF
 if ac_fn_c_try_link "$LINENO"; then :
 
 
-$as_echo "#define HAVE_HMAC_CTX_INIT 1" >>confdefs.h
+$as_echo "#define HAVE_HMAC_CTX 1" >>confdefs.h
 
                         { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
 $as_echo "yes" >&6; }
+                        found_hmac=yes
+                        break
 
 else
 
                         { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
 $as_echo "no" >&6; }
-                    as_fn_error $? "OpenSSL found in $ssldir, but version 0.9.7 or higher is required" "$LINENO" 5
+                        LIBS="$BAKLIBS"
+                        LIBSSL_LIBS="$BAKSSLLIBS"
+                        LIBS="$LIBS -ldl"
+                        LIBSSL_LIBS="$LIBSSL_LIBS -ldl"
+                        { $as_echo "$as_me:${as_lineno-$LINENO}: checking if -lcrypto needs -ldl" >&5
+$as_echo_n "checking if -lcrypto needs -ldl... " >&6; }
+                        cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+int
+main ()
+{
+
+                            int $hmac_func(void);
+                            (void)$hmac_func();
+
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_link "$LINENO"; then :
+
+
+$as_echo "#define HAVE_HMAC_CTX 1" >>confdefs.h
+
+                            { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
+$as_echo "yes" >&6; }
+                            found_hmac=yes
+                            break
+
+else
+
+                            { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
 
 fi
 rm -f core conftest.err conftest.$ac_objext \
@@ -6185,7 +6201,11 @@ rm -f core conftest.err conftest.$ac_objext \
 fi
 rm -f core conftest.err conftest.$ac_objext \
     conftest$ac_exeext conftest.$ac_ext
-        fi
+            done
+	    if test x_$found_hmac != x_yes; then
+                as_fn_error $? "OpenSSL found in $ssldir, but version 0.9.7 or higher is required" "$LINENO" 5
+            fi
+	fi
 
 
     fi
@@ -6829,6 +6849,40 @@ fi
 
 
 
+# rundir
+rundir="${localstatedir}/run"
+
+# Check whether --with-rundir was given.
+if test "${with_rundir+set}" = set; then :
+  withval=$with_rundir;
+else
+  withval=""
+fi
+
+if test -n "$withval"; then
+	rundir="$withval"
+fi
+
+
+# systemd settings
+if pkg-config --exists systemd; then
+	systemdsystemunitdir="`pkg-config --variable=systemdsystemunitdir systemd`"
+else
+	systemdsystemunitdir="$libdir/systemd/system"
+fi
+
+# Check whether --with-unitdir was given.
+if test "${with_unitdir+set}" = set; then :
+  withval=$with_unitdir;
+else
+  withval=""
+fi
+
+if test -n "$withval"; then
+	systemdsystemunitdir="$withval"
+fi
+
+
 hooks="auto"
 
 # Check whether --with-hooks was given.
@@ -7272,7 +7326,7 @@ else
   withval=""
 fi
 
-pidfile="/var/run/dnssec-trigger.pid"
+pidfile="$rundir/dnssec-trigger.pid"
 if test -n "$withval"; then
 	pidfile="$withval"
 fi
